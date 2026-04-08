@@ -211,6 +211,43 @@ function EmptyState() {
   );
 }
 
+// ─── Static Fallback Tools ───────────────────────────────────────────────────
+// Always show these 3 tools even if the backend returns an empty list or fails.
+
+const STATIC_TOOLS: Tool[] = [
+  {
+    id: "gpa-calculator",
+    name: "GPA Calculator",
+    description:
+      "Calculate your semester or cumulative GPA instantly. Add subjects, grades, and credit hours for accurate results.",
+    enabled: true,
+    usageCount: BigInt(0),
+  },
+  {
+    id: "percentage-calculator",
+    name: "Percentage Calculator",
+    description:
+      "Convert marks to percentage in seconds. Enter your score and total marks to get your percentage and grade.",
+    enabled: true,
+    usageCount: BigInt(0),
+  },
+  {
+    id: "pdf-tools",
+    name: "PDF Tools",
+    description:
+      "Merge PDFs, convert images to PDF, and compress documents — all free, right in your browser.",
+    enabled: true,
+    usageCount: BigInt(0),
+  },
+];
+
+/** Merge backend tools with static fallback. Backend data takes precedence (live usage counts),
+ *  but we always guarantee all 3 static tools are present. */
+function mergeWithFallback(backendTools: Tool[]): Tool[] {
+  const byId = new Map(backendTools.map((t) => [t.id, t]));
+  return STATIC_TOOLS.map((fallback) => byId.get(fallback.id) ?? fallback);
+}
+
 // ─── Home Page ───────────────────────────────────────────────────────────────
 
 export function HomePage() {
@@ -253,17 +290,10 @@ export function HomePage() {
     [recordUsage, navigate],
   );
 
-  const toolList = tools ?? [];
+  // Always show all 3 tools: merge backend data with static fallback
+  const rawList = tools ?? [];
+  const toolList = isLoading || isFetching ? [] : mergeWithFallback(rawList);
   const showSkeleton = isLoading || isFetching;
-
-  // Insert AdBanners between every 2 tool cards
-  const toolRows: Array<"ad" | Tool> = [];
-  toolList.forEach((tool, i) => {
-    toolRows.push(tool);
-    if ((i + 1) % 2 === 0 && i < toolList.length - 1) {
-      toolRows.push("ad");
-    }
-  });
 
   return (
     <Layout>
@@ -308,7 +338,7 @@ export function HomePage() {
         <section aria-label="Available Tools">
           <div className="flex items-center gap-2 mb-4">
             <h2 className="font-semibold text-lg text-foreground">Dashboard</h2>
-            {!showSkeleton && toolList.length > 0 && (
+            {!showSkeleton && (
               <Badge variant="secondary" className="text-xs">
                 {toolList.length} tool{toolList.length !== 1 ? "s" : ""}
               </Badge>
@@ -325,9 +355,9 @@ export function HomePage() {
             <EmptyState />
           ) : (
             <div className="flex flex-col gap-4">
-              {/* Build grid with ad banners inserted after every 2nd tool */}
+              {/* First row: first 3 tools (all 3 on desktop in one row) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {toolList.slice(0, 2).map((tool, i) => (
+                {toolList.slice(0, 3).map((tool, i) => (
                   <ToolCard
                     key={tool.id}
                     tool={tool}
@@ -337,32 +367,32 @@ export function HomePage() {
                 ))}
               </div>
 
-              {toolList.length > 2 && (
+              {toolList.length > 3 && (
                 <>
                   <AdBanner slot="between-cards" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {toolList.slice(2, 4).map((tool, i) => (
+                    {toolList.slice(3, 6).map((tool, i) => (
                       <ToolCard
                         key={tool.id}
                         tool={tool}
                         onOpen={handleOpenTool}
-                        index={i + 2}
+                        index={i + 3}
                       />
                     ))}
                   </div>
                 </>
               )}
 
-              {toolList.length > 4 && (
+              {toolList.length > 6 && (
                 <>
                   <AdBanner slot="between-cards" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {toolList.slice(4).map((tool, i) => (
+                    {toolList.slice(6).map((tool, i) => (
                       <ToolCard
                         key={tool.id}
                         tool={tool}
                         onOpen={handleOpenTool}
-                        index={i + 4}
+                        index={i + 6}
                       />
                     ))}
                   </div>

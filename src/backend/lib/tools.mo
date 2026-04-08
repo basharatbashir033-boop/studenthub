@@ -70,6 +70,13 @@ module {
         enabled = true;
         usageCount = 0;
       },
+      {
+        id = "pdf-tools";
+        name = "PDF Tools";
+        description = "Merge, convert, and manage PDF files with ease.";
+        enabled = true;
+        usageCount = 0;
+      },
     ];
     for (tool in defaults.values()) {
       tools.add(tool.id, tool);
