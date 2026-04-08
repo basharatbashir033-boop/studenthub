@@ -1,0 +1,27 @@
+{
+  "overview": "StudentHub is a clean, professional student tool platform with a GPA calculator, percentage calculator, dark/light mode, admin dashboard, and AdSense-ready monetization sections. Built with a mobile-first, Apple/Notion-inspired design.",
+  "features": [
+    "GPA Calculator with multi-subject input and real-time results",
+    "Percentage Calculator with instant letter grade display",
+    "Dark mode and light mode toggle with localStorage persistence",
+    "Admin dashboard for tool management, announcements, and ad controls",
+    "AdSense-ready header, sidebar, and between-card ad placements",
+    "PWA support — installable on mobile devices",
+    "Optional Internet Identity login with full guest access",
+    "Dashboard homepage with tool cards and usage stats",
+    "SEO-optimized routes with meta tags"
+  ],
+  "category": "productivity",
+  "tags": [
+    "student-tools",
+    "gpa-calculator",
+    "percentage-calculator",
+    "pwa",
+    "dark-mode",
+    "admin-panel",
+    "adsense",
+    "education",
+    "productivity"
+  ],
+  "last_updated": "2026-04-08T16:59:31.785Z"
+}

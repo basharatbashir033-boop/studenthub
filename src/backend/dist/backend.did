@@ -1,0 +1,58 @@
+type VisitorStats = record {totalVisitors: nat;};
+type ToolSummary = 
+ record {
+   perTool: vec ToolStats;
+   toolId: ToolId;
+   totalUsage: nat;
+ };
+type ToolStats = 
+ record {
+   toolId: ToolId;
+   usageCount: nat;
+ };
+type ToolId = text;
+type Tool = 
+ record {
+   description: text;
+   enabled: bool;
+   id: ToolId;
+   name: text;
+   usageCount: nat;
+ };
+type Timestamp = int;
+type GuestId = text;
+type AnnouncementId = nat;
+type Announcement = 
+ record {
+   active: bool;
+   createdAt: Timestamp;
+   id: AnnouncementId;
+   "text": text;
+ };
+type AdSettings = 
+ record {
+   betweenCardsAdEnabled: bool;
+   headerAdEnabled: bool;
+   sidebarAdEnabled: bool;
+ };
+service : {
+  adminChangePassword: (currentPassword: text, newPassword: text) -> (bool);
+  adminCreateAnnouncement: ("text": text) -> (Announcement);
+  adminDeleteAnnouncement: (id: nat) -> (bool);
+  adminGetAllTools: () -> (vec Tool);
+  adminGetUsageStats: () -> (ToolSummary);
+  adminGetVisitorStats: () -> (VisitorStats);
+  adminListAnnouncements: () -> (vec Announcement);
+  adminLogin: (email: text, password: text) -> (bool);
+  adminSetBetweenCardsAd: (enabled: bool) -> ();
+  adminSetHeaderAd: (enabled: bool) -> ();
+  adminSetSidebarAd: (enabled: bool) -> ();
+  adminSetToolEnabled: (toolId: ToolId, enabled: bool) -> (bool);
+  adminUpdateAnnouncement: (id: nat, "text": text, active: bool) -> (bool);
+  getActiveAnnouncements: () -> (vec Announcement) query;
+  getAdSettings: () -> (AdSettings) query;
+  getEnabledTools: () -> (vec Tool) query;
+  recordToolUsage: (toolId: ToolId) -> ();
+  trackAuthenticatedVisitor: () -> ();
+  trackGuestVisitor: (guestId: GuestId) -> ();
+}

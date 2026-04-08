@@ -1,0 +1,64 @@
+// Version: 1.0.0
+type AnnouncementId__365153885 = Nat;
+type AnnouncementId__597273208 = AnnouncementId__365153885;
+type Announcement__475565296 =
+  {
+    active : Bool;
+    createdAt : Timestamp__481935476;
+    id : AnnouncementId__597273208;
+    text : Text
+  };
+type Data__159895909<T> = {var count : Nat__490723111; elements : [var ?T]};
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type GuestId__53112204 = Text;
+type Internal__667636161<T> =
+  {children : [var ?Node__92254746<T>]; data : Data__159895909<T>};
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type Leaf__520550824<T> = {data : Data__159895909<T>};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type Node__92254746<T> =
+  {#internal : Internal__667636161<T>; #leaf : Leaf__520550824<T>};
+type Timestamp__301639476 = Int;
+type Timestamp__481935476 = Timestamp__301639476;
+type ToolId__419909698 = Text;
+type ToolId__84501680 = ToolId__419909698;
+type Tool__1003175947 =
+  {
+    description : Text;
+    enabled : Bool;
+    id : ToolId__84501680;
+    name : Text;
+    usageCount : Nat
+  };
+actor {
+  stable var adSettings :
+    {
+      betweenCardsAdEnabled : Bool;
+      headerAdEnabled : Bool;
+      sidebarAdEnabled : Bool
+    };
+  stable var adminEmail : Text;
+  stable var adminPasswordHash : Text;
+  stable announcements :
+    {
+      var root :
+        Node__46230540<AnnouncementId__597273208, Announcement__475565296>;
+      var size : Nat__490723111
+    };
+  stable guests :
+    {var root : Node__92254746<GuestId__53112204>; var size : Nat__490723111};
+  stable var nextAnnouncementId : Nat;
+  stable principals :
+    {var root : Node__92254746<Principal>; var size : Nat__490723111};
+  stable tools :
+    {
+      var root : Node__46230540<ToolId__84501680, Tool__1003175947>;
+      var size : Nat__490723111
+    }
+};

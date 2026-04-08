@@ -1,0 +1,21 @@
+{
+  "name": "StudentHub",
+  "short_name": "StudentHub",
+  "description": "Smart Tools for Smart Students — GPA Calculator, PDF Tools, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b5bdb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/generated/studenthub-logo-transparent.dim_128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "utilities"],
+  "lang": "en",
+  "scope": "/"
+}
