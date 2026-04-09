@@ -29,12 +29,11 @@ const getStoredTheme = (): "light" | "dark" => {
   try {
     const stored = localStorage.getItem("studenthub-theme");
     if (stored === "dark" || stored === "light") return stored;
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches)
-      return "dark";
+    // Default to dark mode for first-time visitors
   } catch {
     // ignore
   }
-  return "light";
+  return "dark";
 };
 
 export const useAppStore = create<AppStore>((set) => ({

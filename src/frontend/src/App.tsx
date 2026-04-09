@@ -30,6 +30,9 @@ const PdfToolsPage = lazy(() =>
 const AdminPage = lazy(() =>
   import("./pages/Admin").then((m) => ({ default: m.AdminPage })),
 );
+const TextToPdfPage = lazy(() =>
+  import("./pages/TextToPdf").then((m) => ({ default: m.TextToPdfPage })),
+);
 
 function PageFallback() {
   return (
@@ -94,12 +97,23 @@ const adminRoute = createRoute({
   ),
 });
 
+const textToPdfRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/text-to-pdf",
+  component: () => (
+    <Suspense fallback={<PageFallback />}>
+      <TextToPdfPage />
+    </Suspense>
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   gpaRoute,
   percentageRoute,
   pdfRoute,
   adminRoute,
+  textToPdfRoute,
 ]);
 
 const router = createRouter({ routeTree });

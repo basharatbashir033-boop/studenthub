@@ -26,6 +26,7 @@ const TOOL_ICON_MAP: Record<string, React.ElementType> = {
   "gpa-calculator": Calculator,
   "percentage-calculator": Percent,
   "pdf-tools": FileText,
+  "text-to-pdf": FileText,
 };
 
 const TOOL_COLOR_MAP: Record<string, string> = {
@@ -33,18 +34,21 @@ const TOOL_COLOR_MAP: Record<string, string> = {
   "percentage-calculator":
     "bg-purple-500/10 text-purple-600 dark:text-purple-400",
   "pdf-tools": "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  "text-to-pdf": "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 };
 
 const TOOL_ROUTE_MAP: Record<string, string> = {
   "gpa-calculator": "/gpa-calculator",
   "percentage-calculator": "/percentage-calculator",
   "pdf-tools": "/pdf-tools",
+  "text-to-pdf": "/text-to-pdf",
 };
 
 const TOOL_BADGE_MAP: Record<string, string | null> = {
   "gpa-calculator": "Popular",
   "percentage-calculator": null,
   "pdf-tools": "New",
+  "text-to-pdf": "New",
 };
 
 function getGuestId(): string {
@@ -239,10 +243,18 @@ const STATIC_TOOLS: Tool[] = [
     enabled: true,
     usageCount: BigInt(0),
   },
+  {
+    id: "text-to-pdf",
+    name: "Text to PDF",
+    description:
+      "Convert any text to a downloadable PDF document. Type or paste your content and export it instantly.",
+    enabled: true,
+    usageCount: BigInt(0),
+  },
 ];
 
 /** Merge backend tools with static fallback. Backend data takes precedence (live usage counts),
- *  but we always guarantee all 3 static tools are present. */
+ *  but we always guarantee all 4 static tools are present. */
 function mergeWithFallback(backendTools: Tool[]): Tool[] {
   const byId = new Map(backendTools.map((t) => [t.id, t]));
   return STATIC_TOOLS.map((fallback) => byId.get(fallback.id) ?? fallback);
@@ -346,8 +358,8 @@ export function HomePage() {
           </div>
 
           {showSkeleton ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((n) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((n) => (
                 <ToolCardSkeleton key={`sk-${n}`} />
               ))}
             </div>
@@ -355,9 +367,9 @@ export function HomePage() {
             <EmptyState />
           ) : (
             <div className="flex flex-col gap-4">
-              {/* First row: first 3 tools (all 3 on desktop in one row) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {toolList.slice(0, 3).map((tool, i) => (
+              {/* First row: up to 4 tools */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {toolList.slice(0, 4).map((tool, i) => (
                   <ToolCard
                     key={tool.id}
                     tool={tool}
@@ -367,32 +379,32 @@ export function HomePage() {
                 ))}
               </div>
 
-              {toolList.length > 3 && (
+              {toolList.length > 4 && (
                 <>
                   <AdBanner slot="between-cards" />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {toolList.slice(3, 6).map((tool, i) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {toolList.slice(4, 8).map((tool, i) => (
                       <ToolCard
                         key={tool.id}
                         tool={tool}
                         onOpen={handleOpenTool}
-                        index={i + 3}
+                        index={i + 4}
                       />
                     ))}
                   </div>
                 </>
               )}
 
-              {toolList.length > 6 && (
+              {toolList.length > 8 && (
                 <>
                   <AdBanner slot="between-cards" />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {toolList.slice(6).map((tool, i) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {toolList.slice(8).map((tool, i) => (
                       <ToolCard
                         key={tool.id}
                         tool={tool}
                         onOpen={handleOpenTool}
-                        index={i + 6}
+                        index={i + 8}
                       />
                     ))}
                   </div>
@@ -408,7 +420,7 @@ export function HomePage() {
           aria-label="Platform highlights"
         >
           {[
-            { label: "Free Tools", value: "3+" },
+            { label: "Free Tools", value: "4+" },
             { label: "No Sign-up", value: "✓" },
             { label: "Mobile Friendly", value: "✓" },
             { label: "Works Offline", value: "✓" },
