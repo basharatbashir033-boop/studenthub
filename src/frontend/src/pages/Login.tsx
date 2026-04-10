@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, GraduationCap, Loader2, LogIn } from "lucide-react";
+import { AlertCircle, GraduationCap, Loader2, LogIn, Wifi } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
@@ -13,7 +13,7 @@ function isValidEmail(email: string): boolean {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isFetching } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +32,8 @@ export function LoginPage() {
       ? "Please enter a valid email address."
       : null;
 
-  const canSubmit = email && password && isValidEmail(email) && !loading;
+  const canSubmit =
+    email && password && isValidEmail(email) && !loading && !isFetching;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,6 +106,21 @@ export function LoginPage() {
             className="px-6 py-6 space-y-5"
             noValidate
           >
+            {/* Connecting indicator */}
+            {isFetching && !loading && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3"
+                data-ocid="login-connecting"
+              >
+                <Wifi className="h-4 w-4 shrink-0 text-muted-foreground animate-pulse" />
+                <p className="text-sm text-muted-foreground">
+                  Connecting to server…
+                </p>
+              </motion.div>
+            )}
+
             {/* Error banner */}
             {error && (
               <motion.div
@@ -177,6 +193,11 @@ export function LoginPage() {
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Signing in…
+                </>
+              ) : isFetching ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Connecting…
                 </>
               ) : (
                 <>

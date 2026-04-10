@@ -26,6 +26,16 @@ function loadStoredUser(): StoredUser | null {
   }
 }
 
+/** Wait up to `ms` milliseconds for a condition to become true, polling every 100ms. */
+async function waitFor(condition: () => boolean, ms: number): Promise<boolean> {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    if (condition()) return true;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return false;
+}
+
 export function useAuth() {
   const { actor, isFetching } = useActor(createActor);
 
@@ -44,8 +54,16 @@ export function useAuth() {
       email: string,
       password: string,
     ): Promise<{ success: boolean; error?: string }> => {
+      // If actor isn't ready yet, wait up to 4s for it to initialize
       if (!actor || isFetching) {
-        return { success: false, error: "Connection not ready. Try again." };
+        const ready = await waitFor(() => !!actor && !isFetching, 4000);
+        if (!ready || !actor) {
+          return {
+            success: false,
+            error:
+              "Still connecting to the server. Please wait a moment and try again.",
+          };
+        }
       }
       try {
         const result = await actor.loginStudent(email, password);
@@ -75,8 +93,16 @@ export function useAuth() {
       email: string,
       password: string,
     ): Promise<{ success: boolean; error?: string }> => {
+      // If actor isn't ready yet, wait up to 4s for it to initialize
       if (!actor || isFetching) {
-        return { success: false, error: "Connection not ready. Try again." };
+        const ready = await waitFor(() => !!actor && !isFetching, 4000);
+        if (!ready || !actor) {
+          return {
+            success: false,
+            error:
+              "Still connecting to the server. Please wait a moment and try again.",
+          };
+        }
       }
       try {
         const result = await actor.registerStudent(email, password);
@@ -109,6 +135,8 @@ export function useAuth() {
   return {
     user: authState.user,
     isAuthenticated: authState.isAuthenticated,
+    isFetching,
+    actor,
     login,
     register,
     logout,

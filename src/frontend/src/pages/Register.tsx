@@ -2,7 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, GraduationCap, Loader2, UserPlus } from "lucide-react";
+import {
+  AlertCircle,
+  GraduationCap,
+  Loader2,
+  UserPlus,
+  Wifi,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
@@ -13,7 +19,7 @@ function isValidEmail(email: string): boolean {
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { register, isAuthenticated } = useAuth();
+  const { register, isAuthenticated, isFetching } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +58,8 @@ export function RegisterPage() {
     isValidEmail(email) &&
     password.length >= 8 &&
     password === confirmPassword &&
-    !loading;
+    !loading &&
+    !isFetching;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -127,6 +134,21 @@ export function RegisterPage() {
             className="px-6 py-6 space-y-5"
             noValidate
           >
+            {/* Connecting indicator */}
+            {isFetching && !loading && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3"
+                data-ocid="register-connecting"
+              >
+                <Wifi className="h-4 w-4 shrink-0 text-muted-foreground animate-pulse" />
+                <p className="text-sm text-muted-foreground">
+                  Connecting to server…
+                </p>
+              </motion.div>
+            )}
+
             {/* Error banner */}
             {error && (
               <motion.div
@@ -260,6 +282,11 @@ export function RegisterPage() {
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Creating account…
+                </>
+              ) : isFetching ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Connecting…
                 </>
               ) : (
                 <>
