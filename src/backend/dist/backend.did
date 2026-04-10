@@ -20,7 +20,39 @@ type Tool =
    usageCount: nat;
  };
 type Timestamp = int;
+type StudentRecord = 
+ record {
+   createdAt: Timestamp;
+   email: text;
+   hashedPassword: HashedPassword;
+   id: StudentId;
+ };
+type StudentId = text;
+type HashedPassword = text;
 type GuestId = text;
+type GpaSubjectInput = 
+ record {
+   credits: nat;
+   marks: nat;
+   subjectName: text;
+ };
+type GpaSubject = 
+ record {
+   credits: nat;
+   gradePoints: float64;
+   letterGrade: text;
+   marks: nat;
+   subjectName: text;
+ };
+type GpaCalculation = 
+ record {
+   calculatedGpa: float64;
+   id: nat;
+   subjects: vec GpaSubject;
+   timestamp: Timestamp;
+   totalCredits: nat;
+   userId: StudentId;
+ };
 type AnnouncementId = nat;
 type Announcement = 
  record {
@@ -52,7 +84,20 @@ service : {
   getActiveAnnouncements: () -> (vec Announcement) query;
   getAdSettings: () -> (AdSettings) query;
   getEnabledTools: () -> (vec Tool) query;
+  getUserGpaHistory: (userId: text) -> (vec GpaCalculation);
+  loginStudent: (email: text, password: text) ->
+   (record {
+      err: opt text;
+      ok: opt StudentRecord;
+    });
   recordToolUsage: (toolId: ToolId) -> ();
+  registerStudent: (email: text, password: text) ->
+   (record {
+      err: opt text;
+      ok: opt StudentRecord;
+    });
+  saveGpaCalculation: (userId: text, subjects: vec GpaSubjectInput,
+   calculatedGpa: float64, totalCredits: nat) -> (GpaCalculation);
   trackAuthenticatedVisitor: () -> ();
   trackGuestVisitor: (guestId: GuestId) -> ();
 }

@@ -13,8 +13,15 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Check, Download, FileText, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  Loader2,
+  RotateCcw,
+} from "lucide-react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { Layout } from "../components/layout/Layout";
 
 const FONT_SIZES = [
@@ -31,74 +38,7 @@ const PAGE_SIZES = [
   { value: "legal", label: "Legal" },
 ];
 
-// ─── Print Stylesheet Helper ─────────────────────────────────────────────────
-
-function printAsPdf(
-  title: string,
-  content: string,
-  fontSize: string,
-  pageSize: string,
-) {
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    alert("Please allow popups to download the PDF.");
-    return;
-  }
-
-  const pageSizeCss =
-    pageSize === "letter"
-      ? "8.5in 11in"
-      : pageSize === "legal"
-        ? "8.5in 14in"
-        : "210mm 297mm";
-  const escaped = content
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .split("\n")
-    .map((line) => `<p>${line || "&nbsp;"}</p>`)
-    .join("");
-
-  printWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${title || "Document"}</title>
-  <style>
-    @page { size: ${pageSizeCss}; margin: 2cm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: ${fontSize}pt;
-      line-height: 1.7;
-      color: #111;
-      background: #fff;
-    }
-    h1 {
-      font-size: ${Math.round(Number(fontSize) * 1.6)}pt;
-      font-weight: 700;
-      margin-bottom: 0.5cm;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 0.3cm;
-    }
-    p { margin-bottom: 0.3em; }
-  </style>
-</head>
-<body>
-  ${title ? `<h1>${title}</h1>` : ""}
-  ${escaped}
-</body>
-</html>`);
-
-  printWindow.document.close();
-  printWindow.focus();
-  setTimeout(() => {
-    printWindow.print();
-    printWindow.close();
-  }, 400);
-}
-
-// ─── Word / character counter ────────────────────────────────────────────────
+type PageFormat = "a4" | "letter" | "legal";
 
 function CountPills({ text }: { text: string }) {
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -115,25 +55,99 @@ function CountPills({ text }: { text: string }) {
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+async function generatePdf(
+  title: string,
+  content: string,
+  fontSize: string,
+  pageSize: PageFormat,
+): Promise<void> {
+  const { jsPDF } = await import("jspdf");
+
+  const formatMap: Record<PageFormat, [number, number]> = {
+    a4: [210, 297],
+    letter: [215.9, 279.4],
+    legal: [215.9, 355.6],
+  };
+
+  const [pageW, pageH] = formatMap[pageSize];
+  const doc = new jsPDF({ unit: "mm", format: [pageW, pageH] });
+
+  const margin = 20;
+  const contentWidth = pageW - margin * 2;
+  const pt = Number(fontSize);
+
+  // Title
+  let cursorY = margin;
+  if (title.trim()) {
+    const titlePt = Math.round(pt * 1.6);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(titlePt);
+    const titleLines = doc.splitTextToSize(
+      title.trim(),
+      contentWidth,
+    ) as string[];
+    for (const line of titleLines) {
+      if (cursorY + titlePt * 0.3528 > pageH - margin) {
+        doc.addPage([pageW, pageH]);
+        cursorY = margin;
+      }
+      doc.text(line, margin, cursorY);
+      cursorY += titlePt * 0.3528 * 1.4;
+    }
+    // Divider line
+    cursorY += 2;
+    doc.setDrawColor(180, 180, 180);
+    doc.line(margin, cursorY, pageW - margin, cursorY);
+    cursorY += 6;
+  }
+
+  // Body
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(pt);
+  const lineHeightMm = pt * 0.3528 * 1.7;
+
+  const paragraphs = content.split("\n");
+  for (const para of paragraphs) {
+    const lines = doc.splitTextToSize(para || " ", contentWidth) as string[];
+    for (const line of lines) {
+      if (cursorY + lineHeightMm > pageH - margin) {
+        doc.addPage([pageW, pageH]);
+        cursorY = margin;
+      }
+      doc.text(line, margin, cursorY);
+      cursorY += lineHeightMm;
+    }
+    cursorY += lineHeightMm * 0.25; // paragraph spacing
+  }
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  doc.save(`text-to-pdf-${dateStr}.pdf`);
+}
 
 export function TextToPdfPage() {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [fontSize, setFontSize] = useState("12");
-  const [pageSize, setPageSize] = useState("a4");
-  const [converted, setConverted] = useState(false);
+  const [pageSize, setPageSize] = useState<PageFormat>("a4");
+  const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleConvert = () => {
+  const handleConvert = async () => {
     if (!text.trim()) {
       textareaRef.current?.focus();
       return;
     }
-    printAsPdf(title, text, fontSize, pageSize);
-    setConverted(true);
-    setTimeout(() => setConverted(false), 3000);
+    setLoading(true);
+    try {
+      await generatePdf(title, text, fontSize, pageSize);
+      toast.success("PDF downloaded successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate PDF. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -141,7 +155,6 @@ export function TextToPdfPage() {
     setText("");
     setFontSize("12");
     setPageSize("a4");
-    setConverted(false);
   };
 
   return (
@@ -169,7 +182,7 @@ export function TextToPdfPage() {
                 Text to PDF
               </h1>
               <p className="text-xs text-muted-foreground truncate">
-                Type or paste text — export as a clean PDF
+                Type or paste text — export as a real PDF file
               </p>
             </div>
           </div>
@@ -222,7 +235,10 @@ export function TextToPdfPage() {
 
           <div className="flex flex-col gap-1.5 min-w-[120px]">
             <Label className="text-xs font-medium">Page Size</Label>
-            <Select value={pageSize} onValueChange={setPageSize}>
+            <Select
+              value={pageSize}
+              onValueChange={(v) => setPageSize(v as PageFormat)}
+            >
               <SelectTrigger
                 className="h-9 text-sm"
                 data-ocid="text-to-pdf-pagesize-select"
@@ -263,7 +279,8 @@ export function TextToPdfPage() {
           {!text.trim() && (
             <p className="text-xs text-muted-foreground">
               Start typing above, then click{" "}
-              <strong>Convert &amp; Download</strong>.
+              <strong>Convert &amp; Download PDF</strong> to get a real PDF
+              file.
             </p>
           )}
         </div>
@@ -278,14 +295,14 @@ export function TextToPdfPage() {
           <Button
             type="button"
             onClick={handleConvert}
-            disabled={!text.trim()}
+            disabled={!text.trim() || loading}
             className="gap-2 transition-smooth"
             data-ocid="text-to-pdf-convert-btn"
           >
-            {converted ? (
+            {loading ? (
               <>
-                <Check className="h-4 w-4" />
-                Done!
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating PDF…
               </>
             ) : (
               <>
@@ -323,12 +340,11 @@ export function TextToPdfPage() {
               Click{" "}
               <strong className="text-foreground">
                 Convert &amp; Download PDF
-              </strong>
-              .
+              </strong>{" "}
+              — your PDF downloads instantly.
             </li>
             <li>
-              Your browser's print dialog will open — choose{" "}
-              <em>Save as PDF</em>.
+              No print dialog, no popups — a real PDF file saved to your device.
             </li>
           </ol>
         </div>

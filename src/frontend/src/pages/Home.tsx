@@ -334,7 +334,8 @@ export function HomePage() {
               </h1>
               <p className="text-muted-foreground max-w-md text-sm md:text-base leading-relaxed">
                 Fast, free tools for students — GPA calculator, percentage
-                calculator, and PDF utilities. No sign-up required.
+                calculator, and PDF utilities. Sign in to access all your smart
+                student tools.
               </p>
             </div>
             <div className="flex items-center gap-3 sm:flex-col sm:items-end">

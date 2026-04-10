@@ -55,6 +55,45 @@ export const mockBackend: backendInterface = {
     { id: "image-to-pdf", name: "Image to PDF", usageCount: BigInt(432), description: "Convert images to PDF format", enabled: true },
     { id: "pdf-to-image", name: "PDF to Image", usageCount: BigInt(321), description: "Extract images from PDF files", enabled: true },
   ],
+  getUserGpaHistory: async () => [
+    {
+      id: BigInt(1),
+      subjects: [
+        { marks: BigInt(85), credits: BigInt(3), subjectName: "Mathematics", gradePoints: 4.0, letterGrade: "A" },
+        { marks: BigInt(72), credits: BigInt(3), subjectName: "Physics", gradePoints: 3.0, letterGrade: "B" },
+        { marks: BigInt(90), credits: BigInt(2), subjectName: "English", gradePoints: 4.0, letterGrade: "A" },
+      ],
+      userId: "student-1",
+      timestamp: BigInt(Date.now() - 86400000),
+      calculatedGpa: 3.63,
+      totalCredits: BigInt(8),
+    },
+    {
+      id: BigInt(2),
+      subjects: [
+        { marks: BigInt(78), credits: BigInt(3), subjectName: "Chemistry", gradePoints: 3.0, letterGrade: "B" },
+        { marks: BigInt(95), credits: BigInt(3), subjectName: "Computer Science", gradePoints: 4.0, letterGrade: "A" },
+      ],
+      userId: "student-1",
+      timestamp: BigInt(Date.now() - 172800000),
+      calculatedGpa: 3.50,
+      totalCredits: BigInt(6),
+    },
+  ],
+  loginStudent: async (email: string) => ({
+    ok: { id: `mock-${email}`, email, createdAt: BigInt(Date.now()), hashedPassword: "" },
+  }),
+  registerStudent: async (email: string) => ({
+    ok: { id: `mock-${email}`, email, createdAt: BigInt(Date.now()), hashedPassword: "" },
+  }),
+  saveGpaCalculation: async (userId: string, _subjects, calculatedGpa, totalCredits) => ({
+    id: BigInt(1),
+    userId,
+    subjects: [],
+    calculatedGpa,
+    totalCredits,
+    timestamp: BigInt(Date.now()),
+  }),
   recordToolUsage: async () => undefined,
   trackAuthenticatedVisitor: async () => undefined,
   trackGuestVisitor: async () => undefined,

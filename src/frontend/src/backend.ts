@@ -90,6 +90,41 @@ export class ExternalBlob {
     }
 }
 export type Timestamp = bigint;
+export interface GpaSubjectInput {
+    marks: bigint;
+    credits: bigint;
+    subjectName: string;
+}
+export interface GpaCalculation {
+    id: bigint;
+    subjects: Array<GpaSubject>;
+    userId: StudentId;
+    timestamp: Timestamp;
+    calculatedGpa: number;
+    totalCredits: bigint;
+}
+export interface GpaSubject {
+    marks: bigint;
+    credits: bigint;
+    subjectName: string;
+    gradePoints: number;
+    letterGrade: string;
+}
+export type ToolId = string;
+export type HashedPassword = string;
+export interface VisitorStats {
+    totalVisitors: bigint;
+}
+export type StudentId = string;
+export interface ToolStats {
+    usageCount: bigint;
+    toolId: ToolId;
+}
+export interface ToolSummary {
+    perTool: Array<ToolStats>;
+    toolId: ToolId;
+    totalUsage: bigint;
+}
 export interface AdSettings {
     betweenCardsAdEnabled: boolean;
     headerAdEnabled: boolean;
@@ -101,15 +136,8 @@ export interface Announcement {
     createdAt: Timestamp;
     text: string;
 }
-export type ToolId = string;
+export type AnnouncementId = bigint;
 export type GuestId = string;
-export interface VisitorStats {
-    totalVisitors: bigint;
-}
-export interface ToolStats {
-    usageCount: bigint;
-    toolId: ToolId;
-}
 export interface Tool {
     id: ToolId;
     name: string;
@@ -117,12 +145,12 @@ export interface Tool {
     description: string;
     enabled: boolean;
 }
-export interface ToolSummary {
-    perTool: Array<ToolStats>;
-    toolId: ToolId;
-    totalUsage: bigint;
+export interface StudentRecord {
+    id: StudentId;
+    createdAt: Timestamp;
+    email: string;
+    hashedPassword: HashedPassword;
 }
-export type AnnouncementId = bigint;
 export interface backendInterface {
     adminChangePassword(currentPassword: string, newPassword: string): Promise<boolean>;
     adminCreateAnnouncement(text: string): Promise<Announcement>;
@@ -140,10 +168,21 @@ export interface backendInterface {
     getActiveAnnouncements(): Promise<Array<Announcement>>;
     getAdSettings(): Promise<AdSettings>;
     getEnabledTools(): Promise<Array<Tool>>;
+    getUserGpaHistory(userId: string): Promise<Array<GpaCalculation>>;
+    loginStudent(email: string, password: string): Promise<{
+        ok?: StudentRecord;
+        err?: string;
+    }>;
     recordToolUsage(toolId: ToolId): Promise<void>;
+    registerStudent(email: string, password: string): Promise<{
+        ok?: StudentRecord;
+        err?: string;
+    }>;
+    saveGpaCalculation(userId: string, subjects: Array<GpaSubjectInput>, calculatedGpa: number, totalCredits: bigint): Promise<GpaCalculation>;
     trackAuthenticatedVisitor(): Promise<void>;
     trackGuestVisitor(guestId: GuestId): Promise<void>;
 }
+import type { StudentRecord as _StudentRecord } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async adminChangePassword(arg0: string, arg1: string): Promise<boolean> {
@@ -370,6 +409,37 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getUserGpaHistory(arg0: string): Promise<Array<GpaCalculation>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUserGpaHistory(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUserGpaHistory(arg0);
+            return result;
+        }
+    }
+    async loginStudent(arg0: string, arg1: string): Promise<{
+        ok?: StudentRecord;
+        err?: string;
+    }> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.loginStudent(arg0, arg1);
+                return from_candid_record_n1(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.loginStudent(arg0, arg1);
+            return from_candid_record_n1(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async recordToolUsage(arg0: ToolId): Promise<void> {
         if (this.processError) {
             try {
@@ -381,6 +451,37 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.recordToolUsage(arg0);
+            return result;
+        }
+    }
+    async registerStudent(arg0: string, arg1: string): Promise<{
+        ok?: StudentRecord;
+        err?: string;
+    }> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.registerStudent(arg0, arg1);
+                return from_candid_record_n1(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.registerStudent(arg0, arg1);
+            return from_candid_record_n1(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async saveGpaCalculation(arg0: string, arg1: Array<GpaSubjectInput>, arg2: number, arg3: bigint): Promise<GpaCalculation> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.saveGpaCalculation(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.saveGpaCalculation(arg0, arg1, arg2, arg3);
             return result;
         }
     }
@@ -412,6 +513,24 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+}
+function from_candid_opt_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_StudentRecord]): StudentRecord | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_record_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    ok: [] | [_StudentRecord];
+    err: [] | [string];
+}): {
+    ok?: StudentRecord;
+    err?: string;
+} {
+    return {
+        ok: record_opt_to_undefined(from_candid_opt_n2(_uploadFile, _downloadFile, value.ok)),
+        err: record_opt_to_undefined(from_candid_opt_n3(_uploadFile, _downloadFile, value.err))
+    };
 }
 export interface CreateActorOptions {
     agent?: Agent;

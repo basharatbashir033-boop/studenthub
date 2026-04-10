@@ -22,7 +22,35 @@ export interface Announcement {
   'text' : string,
 }
 export type AnnouncementId = bigint;
+export interface GpaCalculation {
+  'id' : bigint,
+  'subjects' : Array<GpaSubject>,
+  'userId' : StudentId,
+  'timestamp' : Timestamp,
+  'calculatedGpa' : number,
+  'totalCredits' : bigint,
+}
+export interface GpaSubject {
+  'marks' : bigint,
+  'credits' : bigint,
+  'subjectName' : string,
+  'gradePoints' : number,
+  'letterGrade' : string,
+}
+export interface GpaSubjectInput {
+  'marks' : bigint,
+  'credits' : bigint,
+  'subjectName' : string,
+}
 export type GuestId = string;
+export type HashedPassword = string;
+export type StudentId = string;
+export interface StudentRecord {
+  'id' : StudentId,
+  'createdAt' : Timestamp,
+  'email' : string,
+  'hashedPassword' : HashedPassword,
+}
 export type Timestamp = bigint;
 export interface Tool {
   'id' : ToolId,
@@ -56,7 +84,20 @@ export interface _SERVICE {
   'getActiveAnnouncements' : ActorMethod<[], Array<Announcement>>,
   'getAdSettings' : ActorMethod<[], AdSettings>,
   'getEnabledTools' : ActorMethod<[], Array<Tool>>,
+  'getUserGpaHistory' : ActorMethod<[string], Array<GpaCalculation>>,
+  'loginStudent' : ActorMethod<
+    [string, string],
+    { 'ok' : [] | [StudentRecord], 'err' : [] | [string] }
+  >,
   'recordToolUsage' : ActorMethod<[ToolId], undefined>,
+  'registerStudent' : ActorMethod<
+    [string, string],
+    { 'ok' : [] | [StudentRecord], 'err' : [] | [string] }
+  >,
+  'saveGpaCalculation' : ActorMethod<
+    [string, Array<GpaSubjectInput>, number, bigint],
+    GpaCalculation
+  >,
   'trackAuthenticatedVisitor' : ActorMethod<[], undefined>,
   'trackGuestVisitor' : ActorMethod<[GuestId], undefined>,
 }

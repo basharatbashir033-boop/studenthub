@@ -1,12 +1,20 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
-import { GraduationCap, Menu, Moon, Sun } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { GraduationCap, LogOut, Menu, Moon, Sun } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../hooks/useTheme";
 import { useAppStore } from "../../store/useAppStore";
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { setSidebarOpen } = useAppStore();
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate({ to: "/login" });
+  }
 
   return (
     <header
@@ -45,6 +53,18 @@ export function Header() {
 
         {/* Right controls */}
         <div className="flex items-center gap-2">
+          {/* User email — shown when authenticated */}
+          {isAuthenticated && user && (
+            <span
+              className="hidden sm:inline-block max-w-[160px] truncate text-xs text-muted-foreground"
+              title={user.email}
+              data-ocid="header-user-email"
+            >
+              {user.email}
+            </span>
+          )}
+
+          {/* Theme toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -59,16 +79,33 @@ export function Header() {
             )}
           </Button>
 
-          <Link to="/admin">
+          {/* Admin link */}
+          {isAuthenticated && (
+            <Link to="/admin">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex text-xs h-8"
+                data-ocid="admin-nav-btn"
+              >
+                Admin
+              </Button>
+            </Link>
+          )}
+
+          {/* Logout button */}
+          {isAuthenticated && (
             <Button
-              variant="outline"
-              size="sm"
-              className="hidden sm:flex text-xs h-8"
-              data-ocid="admin-nav-btn"
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              aria-label="Sign out"
+              data-ocid="header-logout"
+              className="text-muted-foreground hover:text-foreground"
             >
-              Admin
+              <LogOut className="h-4 w-4" />
             </Button>
-          </Link>
+          )}
         </div>
       </div>
     </header>

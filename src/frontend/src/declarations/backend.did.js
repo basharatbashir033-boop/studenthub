@@ -39,6 +39,34 @@ export const AdSettings = IDL.Record({
   'headerAdEnabled' : IDL.Bool,
   'sidebarAdEnabled' : IDL.Bool,
 });
+export const GpaSubject = IDL.Record({
+  'marks' : IDL.Nat,
+  'credits' : IDL.Nat,
+  'subjectName' : IDL.Text,
+  'gradePoints' : IDL.Float64,
+  'letterGrade' : IDL.Text,
+});
+export const StudentId = IDL.Text;
+export const GpaCalculation = IDL.Record({
+  'id' : IDL.Nat,
+  'subjects' : IDL.Vec(GpaSubject),
+  'userId' : StudentId,
+  'timestamp' : Timestamp,
+  'calculatedGpa' : IDL.Float64,
+  'totalCredits' : IDL.Nat,
+});
+export const HashedPassword = IDL.Text;
+export const StudentRecord = IDL.Record({
+  'id' : StudentId,
+  'createdAt' : Timestamp,
+  'email' : IDL.Text,
+  'hashedPassword' : HashedPassword,
+});
+export const GpaSubjectInput = IDL.Record({
+  'marks' : IDL.Nat,
+  'credits' : IDL.Nat,
+  'subjectName' : IDL.Text,
+});
 export const GuestId = IDL.Text;
 
 export const idlService = IDL.Service({
@@ -62,7 +90,33 @@ export const idlService = IDL.Service({
   'getActiveAnnouncements' : IDL.Func([], [IDL.Vec(Announcement)], ['query']),
   'getAdSettings' : IDL.Func([], [AdSettings], ['query']),
   'getEnabledTools' : IDL.Func([], [IDL.Vec(Tool)], ['query']),
+  'getUserGpaHistory' : IDL.Func([IDL.Text], [IDL.Vec(GpaCalculation)], []),
+  'loginStudent' : IDL.Func(
+      [IDL.Text, IDL.Text],
+      [
+        IDL.Record({
+          'ok' : IDL.Opt(StudentRecord),
+          'err' : IDL.Opt(IDL.Text),
+        }),
+      ],
+      [],
+    ),
   'recordToolUsage' : IDL.Func([ToolId], [], []),
+  'registerStudent' : IDL.Func(
+      [IDL.Text, IDL.Text],
+      [
+        IDL.Record({
+          'ok' : IDL.Opt(StudentRecord),
+          'err' : IDL.Opt(IDL.Text),
+        }),
+      ],
+      [],
+    ),
+  'saveGpaCalculation' : IDL.Func(
+      [IDL.Text, IDL.Vec(GpaSubjectInput), IDL.Float64, IDL.Nat],
+      [GpaCalculation],
+      [],
+    ),
   'trackAuthenticatedVisitor' : IDL.Func([], [], []),
   'trackGuestVisitor' : IDL.Func([GuestId], [], []),
 });
@@ -98,6 +152,34 @@ export const idlFactory = ({ IDL }) => {
     'headerAdEnabled' : IDL.Bool,
     'sidebarAdEnabled' : IDL.Bool,
   });
+  const GpaSubject = IDL.Record({
+    'marks' : IDL.Nat,
+    'credits' : IDL.Nat,
+    'subjectName' : IDL.Text,
+    'gradePoints' : IDL.Float64,
+    'letterGrade' : IDL.Text,
+  });
+  const StudentId = IDL.Text;
+  const GpaCalculation = IDL.Record({
+    'id' : IDL.Nat,
+    'subjects' : IDL.Vec(GpaSubject),
+    'userId' : StudentId,
+    'timestamp' : Timestamp,
+    'calculatedGpa' : IDL.Float64,
+    'totalCredits' : IDL.Nat,
+  });
+  const HashedPassword = IDL.Text;
+  const StudentRecord = IDL.Record({
+    'id' : StudentId,
+    'createdAt' : Timestamp,
+    'email' : IDL.Text,
+    'hashedPassword' : HashedPassword,
+  });
+  const GpaSubjectInput = IDL.Record({
+    'marks' : IDL.Nat,
+    'credits' : IDL.Nat,
+    'subjectName' : IDL.Text,
+  });
   const GuestId = IDL.Text;
   
   return IDL.Service({
@@ -121,7 +203,33 @@ export const idlFactory = ({ IDL }) => {
     'getActiveAnnouncements' : IDL.Func([], [IDL.Vec(Announcement)], ['query']),
     'getAdSettings' : IDL.Func([], [AdSettings], ['query']),
     'getEnabledTools' : IDL.Func([], [IDL.Vec(Tool)], ['query']),
+    'getUserGpaHistory' : IDL.Func([IDL.Text], [IDL.Vec(GpaCalculation)], []),
+    'loginStudent' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [
+          IDL.Record({
+            'ok' : IDL.Opt(StudentRecord),
+            'err' : IDL.Opt(IDL.Text),
+          }),
+        ],
+        [],
+      ),
     'recordToolUsage' : IDL.Func([ToolId], [], []),
+    'registerStudent' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [
+          IDL.Record({
+            'ok' : IDL.Opt(StudentRecord),
+            'err' : IDL.Opt(IDL.Text),
+          }),
+        ],
+        [],
+      ),
+    'saveGpaCalculation' : IDL.Func(
+        [IDL.Text, IDL.Vec(GpaSubjectInput), IDL.Float64, IDL.Nat],
+        [GpaCalculation],
+        [],
+      ),
     'trackAuthenticatedVisitor' : IDL.Func([], [], []),
     'trackGuestVisitor' : IDL.Func([GuestId], [], []),
   });

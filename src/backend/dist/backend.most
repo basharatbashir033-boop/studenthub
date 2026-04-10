@@ -11,19 +11,52 @@ type Announcement__475565296 =
 type Data__159895909<T> = {var count : Nat__490723111; elements : [var ?T]};
 type Data__791452850<K, V> =
   {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type GpaCalculation__547620016 =
+  {
+    calculatedGpa : Float;
+    id : Nat;
+    subjects : [GpaSubject__775275935];
+    timestamp : Timestamp__301639476;
+    totalCredits : Nat;
+    userId : StudentId__381756952
+  };
+type GpaSubject__775275935 =
+  {
+    credits : Nat;
+    gradePoints : Float;
+    letterGrade : Text;
+    marks : Nat;
+    subjectName : Text
+  };
 type GuestId__53112204 = Text;
+type HashedPassword__318736015 = Text;
 type Internal__667636161<T> =
   {children : [var ?Node__92254746<T>]; data : Data__159895909<T>};
 type Internal__8484328<K, V> =
   {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
 type Leaf__520550824<T> = {data : Data__159895909<T>};
 type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type List__415060402<T> = List__790383201<T>;
+type List__790383201<T> =
+  {
+    var blockIndex : Nat__490723111;
+    var blocks : [var [var ?T]];
+    var elementIndex : Nat__490723111
+  };
 type Nat__490723111 = Nat__920180692;
 type Nat__920180692 = Nat;
 type Node__46230540<K, V> =
   {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
 type Node__92254746<T> =
   {#internal : Internal__667636161<T>; #leaf : Leaf__520550824<T>};
+type StudentId__381756952 = Text;
+type StudentRecord__414823591 =
+  {
+    createdAt : Timestamp__301639476;
+    email : Text;
+    hashedPassword : HashedPassword__318736015;
+    id : StudentId__381756952
+  };
 type Timestamp__301639476 = Int;
 type Timestamp__481935476 = Timestamp__301639476;
 type ToolId__419909698 = Text;
@@ -51,11 +84,26 @@ actor {
         Node__46230540<AnnouncementId__597273208, Announcement__475565296>;
       var size : Nat__490723111
     };
+  stable gpaHistoryMap :
+    {
+      var root :
+        Node__46230540<StudentId__381756952,
+                        List__415060402<GpaCalculation__547620016>>;
+      var size : Nat__490723111
+    };
   stable guests :
     {var root : Node__92254746<GuestId__53112204>; var size : Nat__490723111};
   stable var nextAnnouncementId : Nat;
+  stable nextGpaId : {var value : Nat};
+  stable var nextGpaIdValue : Nat;
   stable principals :
     {var root : Node__92254746<Principal>; var size : Nat__490723111};
+  stable studentMap :
+    {
+      var root :
+        Node__46230540<StudentId__381756952, StudentRecord__414823591>;
+      var size : Nat__490723111
+    };
   stable tools :
     {
       var root : Node__46230540<ToolId__84501680, Tool__1003175947>;
