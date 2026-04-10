@@ -3,13 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   BookOpen,
   GraduationCap,
   PlusCircle,
@@ -23,34 +16,35 @@ import { toast } from "sonner";
 import { AdBanner } from "../components/ads/AdBanner";
 import { Layout } from "../components/layout/Layout";
 
-// ── Grade data ────────────────────────────────────────────────────────────────
+// ── Marks → grade conversion ──────────────────────────────────────────────────
 
-const GRADE_OPTIONS = [
-  { label: "A+", value: "A+", points: 4.0 },
-  { label: "A", value: "A", points: 4.0 },
-  { label: "A-", value: "A-", points: 3.7 },
-  { label: "B+", value: "B+", points: 3.3 },
-  { label: "B", value: "B", points: 3.0 },
-  { label: "B-", value: "B-", points: 2.7 },
-  { label: "C+", value: "C+", points: 2.3 },
-  { label: "C", value: "C", points: 2.0 },
-  { label: "C-", value: "C-", points: 1.7 },
-  { label: "D", value: "D", points: 1.0 },
-  { label: "F", value: "F", points: 0.0 },
-] as const;
+interface GradeInfo {
+  letter: string;
+  points: number;
+}
 
-type GradeValue = (typeof GRADE_OPTIONS)[number]["value"];
-
-const GRADE_MAP: Record<GradeValue, number> = Object.fromEntries(
-  GRADE_OPTIONS.map((g) => [g.value, g.points]),
-) as Record<GradeValue, number>;
+function marksToGrade(marks: number): GradeInfo {
+  if (marks >= 90) return { letter: "A+", points: 4.0 };
+  if (marks >= 85) return { letter: "A", points: 4.0 };
+  if (marks >= 80) return { letter: "A-", points: 3.7 };
+  if (marks >= 75) return { letter: "B+", points: 3.3 };
+  if (marks >= 71) return { letter: "B", points: 3.0 };
+  if (marks >= 66) return { letter: "B-", points: 2.7 };
+  if (marks >= 61) return { letter: "C+", points: 2.3 };
+  if (marks >= 56) return { letter: "C", points: 2.0 };
+  if (marks >= 50) return { letter: "C-", points: 1.7 };
+  if (marks >= 45) return { letter: "D+", points: 1.3 };
+  if (marks >= 40) return { letter: "D", points: 1.0 };
+  return { letter: "F", points: 0.0 };
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface SubjectRow {
   id: string;
   name: string;
-  grade: GradeValue;
+  /** Raw marks string from input (0-100) */
+  marks: string;
   credits: string;
 }
 
@@ -58,13 +52,13 @@ function createRow(): SubjectRow {
   return {
     id: `row-${Date.now()}-${Math.random()}`,
     name: "",
-    grade: "A",
+    marks: "",
     credits: "3",
   };
 }
 
 const INITIAL_ROWS: SubjectRow[] = [
-  { id: "row-init-1", name: "", grade: "A", credits: "3" },
+  { id: "row-init-1", name: "", marks: "", credits: "3" },
 ];
 
 // ── GPA status ────────────────────────────────────────────────────────────────
@@ -90,14 +84,18 @@ function getGpaStatus(gpa: number): { label: string; colorClass: string } {
 function calcGpa(
   rows: SubjectRow[],
 ): { gpa: number; totalCredits: number } | null {
-  const valid = rows.filter((r) => r.credits !== "" && Number(r.credits) > 0);
+  const valid = rows.filter(
+    (r) => r.credits !== "" && Number(r.credits) > 0 && r.marks !== "",
+  );
   if (valid.length === 0) return null;
   let totalPoints = 0;
   let totalCredits = 0;
   for (const row of valid) {
-    const pts = GRADE_MAP[row.grade] ?? 0;
+    const m = Number(row.marks);
+    if (Number.isNaN(m) || m < 0 || m > 100) continue;
+    const { points } = marksToGrade(m);
     const cr = Number(row.credits);
-    totalPoints += pts * cr;
+    totalPoints += points * cr;
     totalCredits += cr;
   }
   return totalCredits > 0
@@ -114,7 +112,9 @@ export function GpaCalculatorPage() {
   const result = calcGpa(rows);
   const gpaDisplay = result ? result.gpa.toFixed(2) : null;
   const status = result ? getGpaStatus(result.gpa) : null;
-  const validCount = rows.filter((r) => Number(r.credits) > 0).length;
+  const validCount = rows.filter(
+    (r) => Number(r.credits) > 0 && r.marks !== "",
+  ).length;
 
   const addRow = useCallback(
     () => setRows((prev) => [...prev, createRow()]),
@@ -140,7 +140,7 @@ export function GpaCalculatorPage() {
   const reset = useCallback(
     () =>
       setRows([
-        { id: `row-reset-${Date.now()}`, name: "", grade: "A", credits: "3" },
+        { id: `row-reset-${Date.now()}`, name: "", marks: "", credits: "3" },
       ]),
     [],
   );
@@ -177,8 +177,8 @@ export function GpaCalculatorPage() {
             GPA Calculator
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Enter your subjects, grades and credit hours for an instant weighted
-            GPA.
+            Enter your marks (0–100) for each subject and credit hours for an
+            instant weighted GPA.
           </p>
         </motion.div>
 
@@ -217,11 +217,13 @@ export function GpaCalculatorPage() {
           </div>
 
           {/* Desktop column headers */}
-          <div className="hidden grid-cols-[1fr_130px_96px_36px] items-center gap-3 border-b border-border bg-muted/20 px-5 py-2 md:grid">
+          <div className="hidden grid-cols-[1fr_150px_96px_36px] items-center gap-3 border-b border-border bg-muted/20 px-5 py-2 md:grid">
             <Label className="text-xs text-muted-foreground">
               Subject Name
             </Label>
-            <Label className="text-xs text-muted-foreground">Grade</Label>
+            <Label className="text-xs text-muted-foreground">
+              Marks (0–100)
+            </Label>
             <Label className="text-xs text-muted-foreground">Credits</Label>
             <span />
           </div>
@@ -327,9 +329,12 @@ export function GpaCalculatorPage() {
                 </p>
                 <div className="space-y-2">
                   {rows
-                    .filter((r) => Number(r.credits) > 0)
+                    .filter((r) => Number(r.credits) > 0 && r.marks !== "")
                     .map((row, idx) => {
-                      const pts = GRADE_MAP[row.grade] ?? 0;
+                      const m = Number(row.marks);
+                      const { letter, points } = marksToGrade(
+                        Number.isNaN(m) ? 0 : Math.min(100, Math.max(0, m)),
+                      );
                       return (
                         <div
                           key={row.id}
@@ -339,11 +344,14 @@ export function GpaCalculatorPage() {
                             {row.name || `Subject ${idx + 1}`}
                           </span>
                           <div className="ml-3 flex shrink-0 items-center gap-2">
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {row.marks} marks
+                            </span>
                             <Badge variant="secondary" className="text-xs">
-                              {row.grade}
+                              {letter}
                             </Badge>
                             <span className="text-xs tabular-nums text-muted-foreground">
-                              {pts.toFixed(1)} pts × {row.credits} cr
+                              {points.toFixed(1)} pts × {row.credits} cr
                             </span>
                           </div>
                         </div>
@@ -376,7 +384,8 @@ export function GpaCalculatorPage() {
             >
               <GraduationCap className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">
-                Enter at least one subject with credit hours to see your GPA.
+                Enter marks and credit hours for at least one subject to see
+                your GPA.
               </p>
             </motion.div>
           )}
@@ -408,6 +417,17 @@ function SubjectRowInput({
   canRemove,
 }: SubjectRowInputProps) {
   const num = index + 1;
+  const marksNum = Number(row.marks);
+  const marksValid =
+    row.marks !== "" &&
+    !Number.isNaN(marksNum) &&
+    marksNum >= 0 &&
+    marksNum <= 100;
+  const marksError =
+    row.marks !== "" &&
+    !Number.isNaN(marksNum) &&
+    (marksNum < 0 || marksNum > 100);
+  const gradePreview = marksValid ? marksToGrade(marksNum) : null;
 
   return (
     <div className="px-5 py-3">
@@ -432,13 +452,28 @@ function SubjectRowInput({
           />
         </div>
         <div className="flex gap-2 pl-7">
-          <GradeSelect
-            value={row.grade}
-            onChange={(v) => onUpdate(row.id, "grade", v as GradeValue)}
-            label={`Subject ${num} grade`}
-            ocid={`gpa-grade-${index}`}
-            className="flex-1"
-          />
+          <div className="flex flex-1 flex-col gap-1">
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              placeholder="Enter marks"
+              value={row.marks}
+              onChange={(e) => onUpdate(row.id, "marks", e.target.value)}
+              className={`h-9 text-sm ${marksError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+              aria-label={`Subject ${num} marks`}
+              data-ocid={`gpa-marks-${index}`}
+            />
+            {marksError && (
+              <span className="text-xs text-destructive">Must be 0–100</span>
+            )}
+            {gradePreview && (
+              <span className="text-xs font-medium text-primary">
+                {gradePreview.letter} ({gradePreview.points.toFixed(1)})
+              </span>
+            )}
+          </div>
           <Input
             type="number"
             min="0"
@@ -455,8 +490,8 @@ function SubjectRowInput({
       </div>
 
       {/* Desktop layout */}
-      <div className="hidden grid-cols-[1fr_130px_96px_36px] items-center gap-3 md:grid">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="hidden grid-cols-[1fr_150px_96px_36px] items-start gap-3 md:grid">
+        <div className="flex min-w-0 items-center gap-2 pt-1.5">
           <IndexBadge num={num} />
           <Input
             type="text"
@@ -468,12 +503,28 @@ function SubjectRowInput({
             data-ocid={`gpa-name-md-${index}`}
           />
         </div>
-        <GradeSelect
-          value={row.grade}
-          onChange={(v) => onUpdate(row.id, "grade", v as GradeValue)}
-          label={`Subject ${num} grade`}
-          ocid={`gpa-grade-md-${index}`}
-        />
+        <div className="flex flex-col gap-1">
+          <Input
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            placeholder="Enter marks"
+            value={row.marks}
+            onChange={(e) => onUpdate(row.id, "marks", e.target.value)}
+            className={`h-9 text-sm ${marksError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+            aria-label={`Subject ${num} marks`}
+            data-ocid={`gpa-marks-md-${index}`}
+          />
+          {marksError && (
+            <span className="text-xs text-destructive">Must be 0–100</span>
+          )}
+          {gradePreview && (
+            <span className="text-xs font-medium text-primary">
+              {gradePreview.letter} ({gradePreview.points.toFixed(1)})
+            </span>
+          )}
+        </div>
         <Input
           type="number"
           min="0"
@@ -482,16 +533,18 @@ function SubjectRowInput({
           placeholder="3"
           value={row.credits}
           onChange={(e) => onUpdate(row.id, "credits", e.target.value)}
-          className="h-9 text-sm"
+          className="h-9 text-sm mt-0.5"
           aria-label={`Subject ${num} credit hours`}
           data-ocid={`gpa-credits-md-${index}`}
         />
-        <RemoveButton
-          canRemove={canRemove}
-          onClick={() => onRemove(row.id)}
-          label={`Remove subject ${num}`}
-          ocid={`gpa-remove-md-${index}`}
-        />
+        <div className="pt-0.5">
+          <RemoveButton
+            canRemove={canRemove}
+            onClick={() => onRemove(row.id)}
+            label={`Remove subject ${num}`}
+            ocid={`gpa-remove-md-${index}`}
+          />
+        </div>
       </div>
     </div>
   );
@@ -534,39 +587,6 @@ function RemoveButton({
   );
 }
 
-function GradeSelect({
-  value,
-  onChange,
-  label,
-  ocid,
-  className,
-}: {
-  value: GradeValue;
-  onChange: (v: string) => void;
-  label: string;
-  ocid: string;
-  className?: string;
-}) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger
-        className={`h-9 text-sm ${className ?? ""}`}
-        aria-label={label}
-        data-ocid={ocid}
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {GRADE_OPTIONS.map((g) => (
-          <SelectItem key={g.value} value={g.value}>
-            {g.label} — {g.points.toFixed(1)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
 // ── SEO meta update ───────────────────────────────────────────────────────────
 
 function PageMeta() {
@@ -588,7 +608,7 @@ function PageMeta() {
     setMeta(
       'meta[name="description"]',
       "content",
-      "Free online GPA calculator for students. Enter subjects, grades and credit hours for an instant weighted GPA result.",
+      "Free online GPA calculator. Enter your marks (0-100) for each subject and credit hours for an instant weighted GPA result.",
     );
     setMeta(
       'meta[property="og:title"]',
