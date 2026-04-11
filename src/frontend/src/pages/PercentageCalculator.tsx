@@ -2,10 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import {
   AlertCircle,
   Award,
   Check,
+  ChevronDown,
+  ChevronUp,
   Copy,
   Percent,
   RotateCcw,
@@ -17,6 +20,67 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { AdBanner } from "../components/ads/AdBanner";
 import { Layout } from "../components/layout/Layout";
+
+// ── How It Works collapsible ──────────────────────────────────────────────────
+
+function HowItWorks({
+  heading,
+  steps,
+  note,
+}: {
+  heading: string;
+  steps: string[];
+  note: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="mt-6 rounded-xl border border-border bg-muted/20 overflow-hidden"
+      data-ocid="how-it-works-pct"
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-muted/30 transition-colors"
+        aria-expanded={open}
+      >
+        <span className="text-sm font-semibold text-foreground">{heading}</span>
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+        )}
+      </button>
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-300 ease-in-out",
+          open ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0",
+        )}
+      >
+        <div className="px-4 pb-4 pt-1 flex flex-col gap-3">
+          <ol className="flex flex-col gap-2.5">
+            {steps.map((text, i) => (
+              <li key={text} className="flex gap-3 text-sm">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary mt-0.5">
+                  {i + 1}
+                </span>
+                <span className="text-muted-foreground leading-relaxed">
+                  {text}
+                </span>
+              </li>
+            ))}
+          </ol>
+          {note && (
+            <p className="text-xs text-muted-foreground/70 italic border-t border-border pt-3">
+              💡 {note}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface CalcResult {
   percentage: number;
@@ -458,6 +522,18 @@ export function PercentageCalculatorPage() {
         <div className="hidden lg:block">
           <AdBanner slot="between-cards" />
         </div>
+
+        <HowItWorks
+          heading="How does the Percentage Calculator work?"
+          steps={[
+            'Enter your "Score Obtained" (marks you got) in the first field.',
+            'Enter the "Total Marks" (maximum possible marks) in the second field.',
+            "Your percentage is calculated instantly and shown with your letter grade and pass/fail status.",
+            'Optionally enter a "Base Percentage" if your institution uses weighted scoring — the adjusted percentage will also be shown.',
+            'Use the "Share" button to copy your score to the clipboard and share it with others.',
+          ]}
+          note="The grade scale is: 90%+ = A, 80–89% = B, 70–79% = C, 60–69% = D, below 60% = F."
+        />
       </div>
     </Layout>
   );

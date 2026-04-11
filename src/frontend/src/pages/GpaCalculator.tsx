@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { useActor } from "@caffeineai/core-infrastructure";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,6 +27,67 @@ import type { GpaCalculation, GpaSubjectInput } from "../backend.d";
 import { AdBanner } from "../components/ads/AdBanner";
 import { Layout } from "../components/layout/Layout";
 import { useAuth } from "../hooks/useAuth";
+
+// ── How It Works collapsible ──────────────────────────────────────────────────
+
+function HowItWorks({
+  heading,
+  steps,
+  note,
+}: {
+  heading: string;
+  steps: string[];
+  note: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="mt-6 rounded-xl border border-border bg-muted/20 overflow-hidden"
+      data-ocid="how-it-works-gpa"
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-muted/30 transition-colors"
+        aria-expanded={open}
+      >
+        <span className="text-sm font-semibold text-foreground">{heading}</span>
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+        )}
+      </button>
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-300 ease-in-out",
+          open ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0",
+        )}
+      >
+        <div className="px-4 pb-4 pt-1 flex flex-col gap-3">
+          <ol className="flex flex-col gap-2.5">
+            {steps.map((text, i) => (
+              <li key={text} className="flex gap-3 text-sm">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary mt-0.5">
+                  {i + 1}
+                </span>
+                <span className="text-muted-foreground leading-relaxed">
+                  {text}
+                </span>
+              </li>
+            ))}
+          </ol>
+          {note && (
+            <p className="text-xs text-muted-foreground/70 italic border-t border-border pt-3">
+              💡 {note}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Marks → grade conversion ──────────────────────────────────────────────────
 
@@ -728,6 +790,18 @@ export function GpaCalculatorPage() {
             </p>
           </motion.div>
         )}
+
+        <HowItWorks
+          heading="How does the GPA Calculator work?"
+          steps={[
+            "Enter each subject name, your marks (out of 100), and the credit hours for that subject.",
+            "The calculator instantly converts your marks to a letter grade (A, B, C, etc.) and grade points (4.0 scale).",
+            "Add all your subjects and see your overall weighted GPA calculated in real time.",
+            'If you\'re logged in, click "Save GPA" to store your results — you can view your history anytime.',
+            'Use "Load" from your history to quickly revisit and compare previous semester results.',
+          ]}
+          note="Marks are on a 0–100 scale. The GPA uses a 4.0 scale: 90–100 = A (4.0), 80–89 = B (3.0), 70–79 = C (2.0), 60–69 = D (1.0), below 60 = F (0.0)."
+        />
       </div>
     </Layout>
   );

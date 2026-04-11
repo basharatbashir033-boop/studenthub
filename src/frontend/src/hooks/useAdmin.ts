@@ -1,15 +1,16 @@
+import { useActor } from "@caffeineai/core-infrastructure";
 import { useCallback, useEffect, useState } from "react";
+import { createActor } from "../backend";
 
-const ADMIN_EMAIL = "basharatbashir033@gmail.com";
 const SESSION_KEY = "studenthub-admin-session";
 
 interface AdminSession {
   isAdmin: boolean;
-  email: string;
   loginTime: number;
 }
 
 export function useAdmin() {
+  const { actor, isFetching } = useActor(createActor);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,28 +33,36 @@ export function useAdmin() {
     }
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Simulate async check
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      if (email === ADMIN_EMAIL && password === "admin123") {
-        const session: AdminSession = {
-          isAdmin: true,
-          email,
-          loginTime: Date.now(),
-        };
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-        setIsAdmin(true);
-        return true;
+  const login = useCallback(
+    async (email: string, password: string) => {
+      if (!actor || isFetching) {
+        setError("Backend not ready. Please try again.");
+        return false;
       }
-      setError("Invalid email or password");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      setIsLoading(true);
+      setError(null);
+      try {
+        const ok = await actor.adminLogin(email, password);
+        if (ok) {
+          const session: AdminSession = {
+            isAdmin: true,
+            loginTime: Date.now(),
+          };
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          setIsAdmin(true);
+          return true;
+        }
+        setError("Invalid email or password");
+        return false;
+      } catch {
+        setError("Login failed. Please try again.");
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [actor, isFetching],
+  );
 
   const logout = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY);
